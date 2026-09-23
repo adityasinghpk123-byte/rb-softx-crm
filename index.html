@@ -1,0 +1,309 @@
+<script>
+// Paste your Google Web App URL here
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
+
+const DOCS = ["Document Checklist", "PAN Card", "Mobile No.", "Email", "Property Proof", "Bank Details", "Electricity Bill"];
+const STAGES = ["Interested", "Documents Pending", "File Ready", "Submitted to Bank", "Under Verification", "Query Raised", "Correction Required", "Resubmitted", "Approved", "Completed", "Rejected"];
+const KEY = "rbSoftxAuthV6", DATA = "rbSoftxCustomersV6";
+
+let auth = JSON.parse(localStorage.getItem(KEY) || "null");
+let customers = JSON.parse(localStorage.getItem(DATA) || "[]");
+let current = null, editIndex = null;
+
+const $ = id => document.getElementById(id);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+
+async function hash(s) {
+  const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join("");
+}
+
+async function fetchGoogleData() {
+  if (!GOOGLE_SCRIPT_URL.includes("script.google.com")) return;
+  try {
+    const res = await fetch(GOOGLE_SCRIPT_URL);
+    const data = await res.json();
+    if (data.auth) {
+      auth = data.auth;
+      localStorage.setItem(KEY, JSON.stringify(auth));
+    }
+    if (data.customers) {
+      customers = data.customers;
+      localStorage.setItem(DATA, JSON.stringify(customers));
+      render();
+    }
+  } catch (err) {
+    console.warn("Offline or Google Drive sync pending:", err);
+  }
+}
+
+async function syncCustomersToDrive() {
+  localStorage.setItem(DATA, JSON.stringify(customers));
+  render();
+  if (!GOOGLE_SCRIPT_URL.includes("script.google.com")) return;
+  try {
+    await fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "saveCustomers", customers })
+    });
+  } catch(e) {
+    console.error("Failed to sync customer records:", e);
+  }
+}
+
+function visible(c) {
+  return current.role === "admin" || c.createdBy === current.id || c.assignedId === current.id || c.kam === current.id;
+}
+
+function badge(s) {
+  return ["Approved","Completed"].includes(s) ? "green" :
+         ["Submitted to Bank","Under Verification","Resubmitted"].includes(s) ? "blue" :
+         ["Query Raised","Correction Required","Rejected"].includes(s) ? "red" : "";
+}
+
+function setup() {
+  $("checks").innerHTML = DOCS.map(d => `<label class="check"><input type="checkbox" value="${d}"> ${d}</label>`).join("");
+  $("process").innerHTML = STAGES.map(s => `<option>${s}</option>`).join("");
+  $("status").innerHTML = '<option value="">All Status</option>' + STAGES.map(s => `<option>${s}</option>`).join("");
+}
+
+function render() {
+  const mine = customers.filter(visible);
+  const ready = mine.filter(c => (c.docs || []).length === DOCS.length).length;
+  const submitted = mine.filter(c => ["Submitted to Bank","Under Verification","Query Raised","Correction Required","Resubmitted","Approved","Completed"].includes(c.process)).length;
+  const stuck = mine.filter(c => ["Query Raised","Correction Required","Rejected"].includes(c.process)).length;
+
+  $("stats").innerHTML = [
+    ["Total Files", mine.length],
+    ["Files Ready", ready],
+    ["In Process", submitted],
+    ["Queries / Stuck", stuck],
+    ["Docs Pending", mine.filter(c => (c.docs || []).length < DOCS.length).length],
+    ["Approved", mine.filter(c => c.process === "Approved").length],
+    ["Completed", mine.filter(c => c.process === "Completed").length]
+  ].map(x => `<div class="stat"><b>${x[1]}</b><span>${x[0]}</span></div>`).join("");
+
+  const q = $("search").value.toLowerCase(), sf = $("status").value, kf = $("kamFilter").value, bf = $("bankFilter").value;
+  const kams = [...new Set(mine.map(c => c.kam).filter(Boolean))].sort();
+  const banks = [...new Set(mine.map(c => c.bank).filter(Boolean))].sort();
+
+  $("kamFilter").innerHTML = '<option value="">All KAM</option>' + kams.map(k => `<option ${k === kf ? "selected" : ""}>${esc(k)}</option>`).join("");
+  $("bankFilter").innerHTML = '<option value="">All Banks</option>' + banks.map(b => `<option ${b === bf ? "selected" : ""}>${esc(b)}</option>`).join("");
+
+  const list = mine.filter(c => 
+    (!q || (c.name + " " + c.mobile + " " + (c.fileId || "")).toLowerCase().includes(q)) &&
+    (!sf || c.process === sf) &&
+    (!kf || c.kam === kf) &&
+    (!bf || c.bank === bf)
+  );
+
+  $("cards").innerHTML = list.length ? list.map((c, i) => {
+    const origIndex = customers.indexOf(c);
+    const dCount = (c.docs || []).length;
+    const pct = Math.round(dCount / DOCS.length * 100);
+
+    return `<article class="customer">
+      <div class="top">
+        <div>
+          <div class="name">${esc(c.name)}</div>
+          <div class="meta">${esc(c.mobile)}${c.email ? " · " + esc(c.email) : ""}${c.property ? " · " + esc(c.property) : ""}</div>
+          ${current.role === "admin" ? `<div class="meta"><b>KAM Assigned:</b> ${esc(c.kam || "Unassigned")}</div>` : ""}
+          <div class="meta">${c.fileId ? "File: " + esc(c.fileId) : "No File ID"}${c.bank ? " · " + esc(c.bank) : ""}</div>
+        </div>
+        <span class="badge ${badge(c.process)}">${esc(c.process)}</span>
+      </div>
+      <div class="docs">${DOCS.map(d => `<div class="doc ${(c.docs || []).includes(d) ? "done" : ""}">${(c.docs \vert{}\vert{} []).includes(d) ? "✓" : "○"} ${d}</div>`).join("")}</div>
+      <div class="progress"><i style="width:${pct}%"></i></div>
+      <div class="meta">${dCount}/${DOCS.length} documents uploaded · ${pct}%</div>
+      ${c.reason ? `<div class="notice" style="margin-top:9px"><b>Query:</b> ${esc(c.reason)}</div>` : ""}
+      <div class="actions">
+        <button class="btn small" onclick="viewCustomer(${origIndex})">View File</button>
+        <button class="btn secondary small" onclick="editCustomer(${origIndex})">Edit Details</button>
+        ${current.role === "admin" ? `<button class="btn danger small" onclick="deleteCustomer(${origIndex})">Delete</button>` : ""}
+      </div>
+    </article>`;
+  }).join("") : `<div class="empty">No customer files accessible.</div>`;
+
+  $("accessNotice").innerHTML = current.role === "admin"
+    ? `<b>Admin Role:</b> Access granted to all 60 customer files, Google Drive settings, and KAM assignments.`
+    : `<b>Staff Role:</b> You can update customer file details and stage progression. Login settings and file deletions are locked.`;
+}
+
+function openForm(c = null) {
+  $("customerForm").reset();
+  $("customerModal").classList.add("open");
+  $("kamAdminField").classList.toggle("hidden", current.role !== "admin");
+  $("customerTitle").textContent = current.role === "admin" ? (c ? "Edit Record" : "Add Customer") : "Edit Customer Details";
+
+  if (c) {
+    ["name","mobile","email","property","bank","fileId","holder","ifsc","account","submission","reason","notes"].forEach(k => $(k).value = c[k] || "");
+    $("process").value = c.process || STAGES[0];
+    if (current.role === "admin") $("kamName").value = c.kam || "";
+    [...$("checks").querySelectorAll("input")].forEach(x => x.checked = (c.docs || []).includes(x.value));
+  }
+}
+
+$("loginForm").onsubmit = async e => {
+  e.preventDefault();
+  const id = $("loginId").value.trim(), pass = $("loginPassword").value, h = await hash(pass);
+
+  await fetchGoogleData();
+
+  const match = Object.entries(auth).find(([role, x]) => x.id.toLowerCase() === id.toLowerCase() && x.hash === h);
+  if (!match) {
+    $("loginError").textContent = "Invalid ID or password.";
+    return;
+  }
+  current = { role: match[0], id: match[1].id };
+  $("loginPassword").value = "";
+  sessionStorage.setItem("rbSoftxSession", JSON.stringify(current));
+  start();
+};
+
+function start() {
+  $("login").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  $("userInfo").textContent = `Logged in as ${current.role === "admin" ? "Administrator" : "Staff"} (${current.id})`;
+  document.querySelectorAll(".adminOnly").forEach(x => x.classList.toggle("hidden", current.role !== "admin"));
+  render();
+}
+
+$("logout").onclick = () => {
+  sessionStorage.removeItem("rbSoftxSession");
+  location.reload();
+};
+
+$("addBtn").onclick = () => {
+  if (current.role !== "admin") return alert("Staff cannot add new files.");
+  editIndex = null;
+  openForm();
+};
+
+$("closeCustomer").onclick = () => $("customerModal").classList.remove("open");
+$("closeDetail").onclick = () => $("detailModal").classList.remove("open");
+
+$("customerForm").onsubmit = async e => {
+  e.preventDefault();
+  const old = editIndex === null ? null : customers[editIndex];
+  if (old && !visible(old)) return alert("Access denied.");
+
+  const c = {
+    name: $("name").value.trim(),
+    mobile: $("mobile").value.trim(),
+    email: $("email").value.trim(),
+    property: $("property").value.trim(),
+    bank: $("bank").value.trim(),
+    fileId: $("fileId").value.trim(),
+    holder: $("holder").value.trim(),
+    ifsc: $("ifsc").value.trim(),
+    account: $("account").value.trim(),
+    submission: $("submission").value,
+    docs: [...$("checks").querySelectorAll("input:checked")].map(x => x.value),
+    process: $("process").value,
+    reason: $("reason").value.trim(),
+    notes: $("notes").value.trim(),
+    createdBy: old?.createdBy || current.id,
+    assignedId: old?.assignedId || "",
+    kam: old?.kam || ""
+  };
+
+  if (current.role === "admin") {
+    c.kam = $("kamName").value.trim();
+    c.assignedId = c.kam.toLowerCase().replace(/\s+/g, "_");
+  }
+
+  if (editIndex === null) customers.unshift(c);
+  else customers[editIndex] = c;
+
+  await syncCustomersToDrive();
+  $("customerModal").classList.remove("open");
+};
+
+function editCustomer(i) {
+  if (!visible(customers[i])) return alert("Access denied.");
+  editIndex = i;
+  openForm(customers[i]);
+}
+
+async function deleteCustomer(i) {
+  if (current.role !== "admin") return alert("Only Admin can delete records.");
+  if (confirm("Delete this customer from Google Drive permanently?")) {
+    customers.splice(i, 1);
+    await syncCustomersToDrive();
+  }
+}
+
+function viewCustomer(i) {
+  if (!visible(customers[i])) return alert("Access denied.");
+  const c = customers[i], p = STAGES.indexOf(c.process);
+  $("detail").innerHTML = `
+    <h2>${esc(c.name)}</h2>
+    <div class="meta">${esc(c.mobile)} · ${esc(c.email || "No email")} ${current.role === "admin" ? `· KAM: ${esc(c.kam || "Unassigned")}` : ""}</div>
+    <div class="panel">
+      <b>Bank Record</b>
+      <div class="meta">Bank: ${esc(c.bank || "—")} · Case ID: ${esc(c.fileId || "—")}</div>
+      <div class="meta">Account: ${esc(c.account || "—")} · IFSC: ${esc(c.ifsc || "—")}</div>
+    </div>
+    <div class="panel">
+      <b>Document Checklist</b>
+      <div class="docs">${DOCS.map(d => `<div class="doc ${(c.docs || []).includes(d) ? "done" : ""}">${(c.docs \vert{}\vert{} []).includes(d) ? "✓" : "○"} ${d}</div>`).join("")}</div>
+    </div>
+    <div class="panel">
+      <b>Timeline</b>
+      <div class="timeline">${STAGES.map((s, j) => `<div class="stage"><i class="dot ${j < p ? "done" : j === p ? "active" : ""}"></i>${s}${j === p ? " (Current)" : ""}</div>`).join("")}</div>
+    </div>
+    ${c.reason ? `<div class="notice" style="margin-top:10px"><b>Stuck Reason:</b> ${esc(c.reason)}</div>` : ""}
+    ${c.notes ? `<p><b>Next Action:</b> ${esc(c.notes)}</p>` : ""}`;
+  $("detailModal").classList.add("open");
+}
+
+$("adminSettings").onclick = () => {
+  if (current.role !== "admin") return;
+  $("adminModal").classList.add("open");
+  $("newAdminId").value = "";
+  $("newAdminPassword").value = "";
+  $("confirmAdminPassword").value = "";
+  $("adminError").textContent = "";
+};
+
+$("closeAdmin").onclick = () => $("adminModal").classList.remove("open");
+
+$("adminForm").onsubmit = async e => {
+  e.preventDefault();
+  if (current.role !== "admin") return;
+  const id = $("newAdminId").value.trim(), p = $("newAdminPassword").value, cp = $("confirmAdminPassword").value;
+
+  if (p.length < 8) return $("adminError").textContent = "Password must be at least 8 characters.";
+  if (p !== cp) return $("adminError").textContent = "Passwords do not match.";
+
+  const newHash = await hash(p);
+  auth.admin = { id, hash: newHash };
+  localStorage.setItem(KEY, JSON.stringify(auth));
+
+  if (GOOGLE_SCRIPT_URL.includes("script.google.com")) {
+    await fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "updateAuth", newAdminId: id, newHash })
+    });
+  }
+
+  current = { role: "admin", id };
+  sessionStorage.setItem("rbSoftxSession", JSON.stringify(current));
+  $("adminModal").classList.remove("open");
+  $("userInfo").textContent = `Logged in as Administrator (${id})`;
+  alert("Admin credentials updated in Google Drive. All devices must now log in with the new password.");
+};
+
+$("search").oninput = render;
+$("status").onchange = render;
+$("kamFilter").onchange = render;
+$("bankFilter").onchange = render;
+
+setup();
+fetchGoogleData().then(() => {
+  const s = sessionStorage.getItem("rbSoftxSession");
+  if (s) {
+    try { current = JSON.parse(s); start(); } catch {}
+  }
+});
+</script>
