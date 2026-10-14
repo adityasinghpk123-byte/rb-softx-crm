@@ -1,12 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RB SoftX CRM</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#dbe3ee;--blue:#2563eb;--green:#16a34a;--red:#dc2626;--amber:#d97706}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}.login-card{width:min(430px,100%);background:#fff;border:1px solid var(--line);border-radius:18px;padding:28px}.logo{font-size:25px;font-weight:900}.sub{color:var(--muted);font-size:13px;margin-top:4px}.role-note{background:#eff6ff;color:#1e40af;padding:11px;border-radius:9px;font-size:12px;margin:16px 0}.field{display:flex;flex-direction:column;gap:5px;margin-bottom:11px}.label{font-size:12px;font-weight:700}.input,.select,.textarea{border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:#fff;min-height:42px;outline:none}.input:focus,.select:focus,.textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px #eff6ff}.btn{border:0;border-radius:9px;padding:10px 14px;min-height:42px;background:var(--blue);color:#fff;font-weight:700}.btn.secondary{background:#fff;color:var(--text);border:1px solid var(--line)}.btn.danger{background:#fff;color:var(--red);border:1px solid #fecaca}
+.app{max-width:1450px;margin:auto;padding:22px}.head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.title{font-size:27px;font-weight:800}.stats{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin:18px 0}.stat,.panel,.customer{background:#fff;border:1px solid var(--line);border-radius:14px}.stat{padding:13px}.stat b{font-size:22px}.stat span{display:block;color:var(--muted);font-size:11px;margin-top:3px}.panel{padding:15px;margin-top:12px}.toolbar{display:flex;gap:8px;flex-wrap:wrap}.search{flex:1;min-width:220px}.cards{display:grid;gap:11px;margin-top:11px}.customer{padding:14px}.top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.name{font-size:17px;font-weight:800}.meta{font-size:12px;color:var(--muted);margin-top:3px}.badge{display:inline-block;padding:6px 9px;border-radius:999px;font-size:10px;font-weight:800;background:#fef3c7;color:#92400e}.badge.blue{background:#dbeafe;color:#1e40af}.badge.green{background:#dcfce7;color:#166534}.badge.red{background:#fee2e2;color:#991b1b}.docs{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:11px}.doc{font-size:10px;text-align:center;padding:7px 4px;border-radius:7px;background:#fee2e2;color:#991b1b}.doc.done{background:#dcfce7;color:#166534}.progress{height:7px;background:#e2e8f0;border-radius:8px;overflow:hidden;margin-top:10px}.progress i{display:block;height:100%;background:var(--blue)}.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}.small{min-height:35px;padding:7px 10px;font-size:11px}.notice{background:#fffbeb;border:1px solid #fde68a;color:#92400e;padding:10px;border-radius:9px;font-size:12px}.empty{text-align:center;color:var(--muted);padding:28px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;padding:15px;z-index:10}.modal.open{display:flex}.dialog{width:min(940px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:16px;padding:20px}.formgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.full{grid-column:1/-1}.checks{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.check{border:1px solid var(--line);border-radius:8px;padding:9px;font-size:12px}.timeline{display:grid;gap:8px;margin-top:10px}.stage{font-size:12px;display:flex;align-items:center;gap:8px}.dot{width:10px;height:10px;border-radius:50%;background:#cbd5e1}.dot.done{background:var(--green)}.dot.active{background:var(--blue)}
+@media(max-width:1050px){.stats{grid-template-columns:repeat(4,1fr)}.docs{grid-template-columns:repeat(4,1fr)}}@media(max-width:620px){.app{padding:13px}.stats{grid-template-columns:repeat(2,1fr)}.formgrid,.checks{grid-template-columns:1fr}.full{grid-column:auto}.docs{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<div id="login" class="login">
+  <div class="login-card">
+    <div class="logo">RB SoftX CRM</div>
+    <div class="sub">Customer & Bank File Management</div>
+    <div class="role-note"><b>Roles:</b> Admin has full control. Staff can only edit customer files.</div>
+    <form id="loginForm">
+      <div class="field"><label class="label">Login ID</label><input class="input" id="loginId" required autocomplete="username"></div>
+      <div class="field"><label class="label">Password</label><input class="input" id="loginPassword" required type="password" autocomplete="current-password"></div>
+      <button class="btn" style="width:100%" id="loginSubmitBtn">Login</button>
+      <div id="loginError" style="color:#dc2626;font-size:12px;margin-top:9px"></div>
+    </form>
+    <div class="meta" style="margin-top:15px">
+      Staff Login: <b>staff</b> / <b>staff123</b><br>
+      Admin Login: <b>admin</b> / <b>admin123</b>
+    </div>
+  </div>
+</div>
+
+<div id="app" class="app hidden">
+  <header class="head">
+    <div><div class="title">RB SoftX Customer CRM</div><div class="sub" id="userInfo"></div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn adminOnly" id="addBtn">+ Add Customer</button>
+      <button class="btn secondary adminOnly" id="adminSettings">Admin Login Settings</button>
+      <button class="btn secondary" id="logout">Logout</button>
+    </div>
+  </header>
+  <div class="stats" id="stats"></div>
+  <section class="panel">
+    <div class="toolbar">
+      <input class="input search" id="search" placeholder="Search customer, mobile or file ID">
+      <select class="select" id="status"></select>
+      <select class="select adminOnly" id="kamFilter"></select>
+      <select class="select" id="bankFilter"></select>
+      <button class="btn secondary adminOnly" id="export">Export CSV</button>
+      <button class="btn secondary adminOnly" id="backup">Backup</button>
+      <button class="btn secondary adminOnly" id="restore">Restore</button>
+      <input id="backupFile" type="file" accept=".json" hidden>
+    </div>
+    <div id="accessNotice" class="notice" style="margin-top:10px"></div>
+    <div id="cards" class="cards"></div>
+  </section>
+</div>
+
+<!-- Customer Form Modal -->
+<div class="modal" id="customerModal"><div class="dialog">
+  <button class="btn secondary" style="float:right" id="closeCustomer">Close</button>
+  <h2 id="customerTitle">Customer File</h2>
+  <form id="customerForm" class="formgrid">
+    <div class="field"><label class="label">Customer Name *</label><input class="input" id="name" required></div>
+    <div class="field"><label class="label">Mobile No. *</label><input class="input" id="mobile" required></div>
+    <div class="field"><label class="label">Email</label><input class="input" id="email" type="email"></div>
+    <div class="field"><label class="label">Property / Site</label><input class="input" id="property"></div>
+    <div class="field full" id="kamAdminField"><label class="label">KAM / Lead Given By <span style="color:#dc2626">(Admin Only)</span></label><input class="input" id="kamName" placeholder="Assign KAM"></div>
+    <div class="field"><label class="label">Bank</label><input class="input" id="bank"></div>
+    <div class="field"><label class="label">File / Case ID</label><input class="input" id="fileId"></div>
+    <div class="field"><label class="label">Account Holder</label><input class="input" id="holder"></div>
+    <div class="field"><label class="label">IFSC</label><input class="input" id="ifsc"></div>
+    <div class="field"><label class="label">Bank Account No.</label><input class="input" id="account"></div>
+    <div class="field"><label class="label">Bank Submission Date</label><input class="input" id="submission" type="date"></div>
+    <div class="field"><label class="label">Current Process</label><select class="select" id="process"></select></div>
+    <div class="field full"><label class="label">Documents Received</label><div class="checks" id="checks"></div></div>
+    <div class="field"><label class="label">Stuck / Query Reason</label><input class="input" id="reason"></div>
+    <div class="field"><label class="label">Next Action / Notes</label><textarea class="textarea" id="notes" rows="3"></textarea></div>
+    <div class="field full"><button class="btn" type="submit">Save File</button></div>
+  </form>
+</div></div>
+
+<!-- Details Modal -->
+<div class="modal" id="detailModal"><div class="dialog">
+  <button class="btn secondary" style="float:right" id="closeDetail">Close</button>
+  <div id="detail"></div>
+</div></div>
+
+<!-- Admin Login Settings Modal -->
+<div class="modal" id="adminModal"><div class="dialog" style="max-width:520px">
+  <button class="btn secondary" style="float:right" id="closeAdmin">Close</button>
+  <h2>Admin Access Settings</h2>
+  <div class="notice">Updating the Admin ID and password will replace the old login across all devices.</div>
+  <form id="adminForm" style="margin-top:14px">
+    <div class="field"><label class="label">New Admin ID *</label><input class="input" id="newAdminId" required autocomplete="off"></div>
+    <div class="field"><label class="label">New Admin Password *</label><input class="input" id="newAdminPassword" required type="password" minlength="8" autocomplete="new-password"></div>
+    <div class="field"><label class="label">Confirm New Password *</label><input class="input" id="confirmAdminPassword" required type="password" minlength="8" autocomplete="new-password"></div>
+    <div id="adminError" style="color:#dc2626;font-size:12px;margin-bottom:10px"></div>
+    <button class="btn" type="submit">Save New Admin Login</button>
+  </form>
+</div></div>
+
 <script>
-// Paste your Google Web App URL here
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
+// OPTIONAL: If you have your Google Apps Script URL, paste it here. 
+// If left empty (""), the CRM operates locally without breaking or throwing errors.
+const GOOGLE_SCRIPT_URL = "";
 
-const DOCS = ["Document Checklist", "PAN Card", "Mobile No.", "Email", "Property Proof", "Bank Details", "Electricity Bill"];
+const DOCS = ["Identity Document", "PAN Card", "Mobile No.", "Email", "Property Proof", "Bank Details", "Electricity Bill"];
 const STAGES = ["Interested", "Documents Pending", "File Ready", "Submitted to Bank", "Under Verification", "Query Raised", "Correction Required", "Resubmitted", "Approved", "Completed", "Rejected"];
-const KEY = "rbSoftxAuthV6", DATA = "rbSoftxCustomersV6";
+const KEY = "rbSoftxAuth_v1", DATA = "rbSoftxCust_v1";
 
-let auth = JSON.parse(localStorage.getItem(KEY) || "null");
+let defaultAuth = {
+  admin: { id: "admin", hash: "240be518fabd2724ddb6f04eeb1da5967448d7e42b0f44e542d2a4ea0f1f730f" }, // admin123
+  staff: { id: "staff", hash: "1bbd886460827015e5d605ed44252251" } // staff123
+};
+
+let auth = JSON.parse(localStorage.getItem(KEY) || "null") || defaultAuth;
 let customers = JSON.parse(localStorage.getItem(DATA) || "[]");
 let current = null, editIndex = null;
 
@@ -18,36 +130,36 @@ async function hash(s) {
   return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join("");
 }
 
-async function fetchGoogleData() {
-  if (!GOOGLE_SCRIPT_URL.includes("script.google.com")) return;
+async function syncFromGoogle() {
+  if (!GOOGLE_SCRIPT_URL || !GOOGLE_SCRIPT_URL.startsWith("https://script.google.com")) return;
   try {
     const res = await fetch(GOOGLE_SCRIPT_URL);
-    const data = await res.json();
-    if (data.auth) {
-      auth = data.auth;
+    const d = await res.json();
+    if (d.auth && d.auth.admin) {
+      auth = d.auth;
       localStorage.setItem(KEY, JSON.stringify(auth));
     }
-    if (data.customers) {
-      customers = data.customers;
+    if (Array.isArray(d.customers)) {
+      customers = d.customers;
       localStorage.setItem(DATA, JSON.stringify(customers));
       render();
     }
-  } catch (err) {
-    console.warn("Offline or Google Drive sync pending:", err);
+  } catch(e) {
+    console.warn("Cloud sync unavailable, continuing offline.");
   }
 }
 
-async function syncCustomersToDrive() {
+async function syncToGoogle(action, payload = {}) {
   localStorage.setItem(DATA, JSON.stringify(customers));
   render();
-  if (!GOOGLE_SCRIPT_URL.includes("script.google.com")) return;
+  if (!GOOGLE_SCRIPT_URL || !GOOGLE_SCRIPT_URL.startsWith("https://script.google.com")) return;
   try {
     await fetch(GOOGLE_SCRIPT_URL, {
       method: "POST",
-      body: JSON.stringify({ action: "saveCustomers", customers })
+      body: JSON.stringify({ action, ...payload })
     });
   } catch(e) {
-    console.error("Failed to sync customer records:", e);
+    console.warn("Cloud write pending:", e);
   }
 }
 
@@ -75,19 +187,19 @@ function render() {
 
   $("stats").innerHTML = [
     ["Total Files", mine.length],
-    ["Files Ready", ready],
-    ["In Process", submitted],
-    ["Queries / Stuck", stuck],
-    ["Docs Pending", mine.filter(c => (c.docs || []).length < DOCS.length).length],
+    ["Ready Files", ready],
+    ["Processing", submitted],
+    ["Stuck / Action Req.", stuck],
+    ["Docs Incomplete", mine.filter(c => (c.docs || []).length < DOCS.length).length],
     ["Approved", mine.filter(c => c.process === "Approved").length],
     ["Completed", mine.filter(c => c.process === "Completed").length]
   ].map(x => `<div class="stat"><b>${x[1]}</b><span>${x[0]}</span></div>`).join("");
 
   const q = $("search").value.toLowerCase(), sf = $("status").value, kf = $("kamFilter").value, bf = $("bankFilter").value;
-  const kams = [...new Set(mine.map(c => c.kam).filter(Boolean))].sort();
-  const banks = [...new Set(mine.map(c => c.bank).filter(Boolean))].sort();
+  const kams = [...new Set(customers.map(c => c.kam).filter(Boolean))].sort();
+  const banks = [...new Set(customers.map(c => c.bank).filter(Boolean))].sort();
 
-  $("kamFilter").innerHTML = '<option value="">All KAM</option>' + kams.map(k => `<option ${k === kf ? "selected" : ""}>${esc(k)}</option>`).join("");
+  $("kamFilter").innerHTML = '<option value="">All KAMs</option>' + kams.map(k => `<option ${k === kf ? "selected" : ""}>${esc(k)}</option>`).join("");
   $("bankFilter").innerHTML = '<option value="">All Banks</option>' + banks.map(b => `<option ${b === bf ? "selected" : ""}>${esc(b)}</option>`).join("");
 
   const list = mine.filter(c => 
@@ -98,7 +210,7 @@ function render() {
   );
 
   $("cards").innerHTML = list.length ? list.map((c, i) => {
-    const origIndex = customers.indexOf(c);
+    const origIdx = customers.indexOf(c);
     const dCount = (c.docs || []).length;
     const pct = Math.round(dCount / DOCS.length * 100);
 
@@ -107,33 +219,33 @@ function render() {
         <div>
           <div class="name">${esc(c.name)}</div>
           <div class="meta">${esc(c.mobile)}${c.email ? " · " + esc(c.email) : ""}${c.property ? " · " + esc(c.property) : ""}</div>
-          ${current.role === "admin" ? `<div class="meta"><b>KAM Assigned:</b> ${esc(c.kam || "Unassigned")}</div>` : ""}
-          <div class="meta">${c.fileId ? "File: " + esc(c.fileId) : "No File ID"}${c.bank ? " · " + esc(c.bank) : ""}</div>
+          ${current.role === "admin" ? `<div class="meta"><b>KAM:</b> ${esc(c.kam || "Unassigned")}</div>` : ""}
+          <div class="meta">${c.fileId ? "File ID: " + esc(c.fileId) : "No File ID"}${c.bank ? " · Bank: " + esc(c.bank) : ""}</div>
         </div>
         <span class="badge ${badge(c.process)}">${esc(c.process)}</span>
       </div>
       <div class="docs">${DOCS.map(d => `<div class="doc ${(c.docs || []).includes(d) ? "done" : ""}">${(c.docs \vert{}\vert{} []).includes(d) ? "✓" : "○"} ${d}</div>`).join("")}</div>
       <div class="progress"><i style="width:${pct}%"></i></div>
-      <div class="meta">${dCount}/${DOCS.length} documents uploaded · ${pct}%</div>
-      ${c.reason ? `<div class="notice" style="margin-top:9px"><b>Query:</b> ${esc(c.reason)}</div>` : ""}
+      <div class="meta">${dCount}/${DOCS.length} documents uploaded (${pct}%)</div>
+      ${c.reason ? `<div class="notice" style="margin-top:9px"><b>Query Note:</b> ${esc(c.reason)}</div>` : ""}
       <div class="actions">
-        <button class="btn small" onclick="viewCustomer(${origIndex})">View File</button>
-        <button class="btn secondary small" onclick="editCustomer(${origIndex})">Edit Details</button>
-        ${current.role === "admin" ? `<button class="btn danger small" onclick="deleteCustomer(${origIndex})">Delete</button>` : ""}
+        <button class="btn small" onclick="viewCustomer(${origIdx})">View File</button>
+        <button class="btn secondary small" onclick="editCustomer(${origIdx})">Edit Customer Details</button>
+        ${current.role === "admin" ? `<button class="btn danger small" onclick="deleteCustomer(${origIdx})">Delete</button>` : ""}
       </div>
     </article>`;
-  }).join("") : `<div class="empty">No customer files accessible.</div>`;
+  }).join("") : `<div class="empty">No files found.</div>`;
 
   $("accessNotice").innerHTML = current.role === "admin"
-    ? `<b>Admin Role:</b> Access granted to all 60 customer files, Google Drive settings, and KAM assignments.`
-    : `<b>Staff Role:</b> You can update customer file details and stage progression. Login settings and file deletions are locked.`;
+    ? `<b>Admin Access:</b> Full operational control enabled.`
+    : `<b>Staff Access:</b> You are permitted to modify customer details only. Administrative settings are locked.`;
 }
 
 function openForm(c = null) {
   $("customerForm").reset();
   $("customerModal").classList.add("open");
   $("kamAdminField").classList.toggle("hidden", current.role !== "admin");
-  $("customerTitle").textContent = current.role === "admin" ? (c ? "Edit Record" : "Add Customer") : "Edit Customer Details";
+  $("customerTitle").textContent = current.role === "admin" ? (c ? "Edit Record" : "Add Customer") : "Update Customer Details";
 
   if (c) {
     ["name","mobile","email","property","bank","fileId","holder","ifsc","account","submission","reason","notes"].forEach(k => $(k).value = c[k] || "");
@@ -145,13 +257,14 @@ function openForm(c = null) {
 
 $("loginForm").onsubmit = async e => {
   e.preventDefault();
-  const id = $("loginId").value.trim(), pass = $("loginPassword").value, h = await hash(pass);
-
-  await fetchGoogleData();
+  $("loginError").textContent = "";
+  const id = $("loginId").value.trim();
+  const pass = $("loginPassword").value;
+  const h = await hash(pass);
 
   const match = Object.entries(auth).find(([role, x]) => x.id.toLowerCase() === id.toLowerCase() && x.hash === h);
   if (!match) {
-    $("loginError").textContent = "Invalid ID or password.";
+    $("loginError").textContent = "Invalid Login ID or Password.";
     return;
   }
   current = { role: match[0], id: match[1].id };
@@ -163,7 +276,7 @@ $("loginForm").onsubmit = async e => {
 function start() {
   $("login").classList.add("hidden");
   $("app").classList.remove("hidden");
-  $("userInfo").textContent = `Logged in as ${current.role === "admin" ? "Administrator" : "Staff"} (${current.id})`;
+  $("userInfo").textContent = `${current.role === "admin" ? "Administrator" : "Staff"} · ${current.id}`;
   document.querySelectorAll(".adminOnly").forEach(x => x.classList.toggle("hidden", current.role !== "admin"));
   render();
 }
@@ -174,7 +287,7 @@ $("logout").onclick = () => {
 };
 
 $("addBtn").onclick = () => {
-  if (current.role !== "admin") return alert("Staff cannot add new files.");
+  if (current.role !== "admin") return alert("Staff cannot create new files.");
   editIndex = null;
   openForm();
 };
@@ -215,7 +328,7 @@ $("customerForm").onsubmit = async e => {
   if (editIndex === null) customers.unshift(c);
   else customers[editIndex] = c;
 
-  await syncCustomersToDrive();
+  await syncToGoogle("saveCustomers", { customers });
   $("customerModal").classList.remove("open");
 };
 
@@ -227,9 +340,9 @@ function editCustomer(i) {
 
 async function deleteCustomer(i) {
   if (current.role !== "admin") return alert("Only Admin can delete records.");
-  if (confirm("Delete this customer from Google Drive permanently?")) {
+  if (confirm("Permanently delete this customer record?")) {
     customers.splice(i, 1);
-    await syncCustomersToDrive();
+    await syncToGoogle("saveCustomers", { customers });
   }
 }
 
@@ -238,22 +351,22 @@ function viewCustomer(i) {
   const c = customers[i], p = STAGES.indexOf(c.process);
   $("detail").innerHTML = `
     <h2>${esc(c.name)}</h2>
-    <div class="meta">${esc(c.mobile)} · ${esc(c.email || "No email")} ${current.role === "admin" ? `· KAM: ${esc(c.kam || "Unassigned")}` : ""}</div>
+    <div class="meta">${esc(c.mobile)} · ${esc(c.email || "No Email")} ${current.role === "admin" ? `· KAM: ${esc(c.kam || "Unassigned")}` : ""}</div>
     <div class="panel">
       <b>Bank Record</b>
       <div class="meta">Bank: ${esc(c.bank || "—")} · Case ID: ${esc(c.fileId || "—")}</div>
       <div class="meta">Account: ${esc(c.account || "—")} · IFSC: ${esc(c.ifsc || "—")}</div>
     </div>
     <div class="panel">
-      <b>Document Checklist</b>
+      <b>Document Verification</b>
       <div class="docs">${DOCS.map(d => `<div class="doc ${(c.docs || []).includes(d) ? "done" : ""}">${(c.docs \vert{}\vert{} []).includes(d) ? "✓" : "○"} ${d}</div>`).join("")}</div>
     </div>
     <div class="panel">
-      <b>Timeline</b>
+      <b>Workflow Progress</b>
       <div class="timeline">${STAGES.map((s, j) => `<div class="stage"><i class="dot ${j < p ? "done" : j === p ? "active" : ""}"></i>${s}${j === p ? " (Current)" : ""}</div>`).join("")}</div>
     </div>
-    ${c.reason ? `<div class="notice" style="margin-top:10px"><b>Stuck Reason:</b> ${esc(c.reason)}</div>` : ""}
-    ${c.notes ? `<p><b>Next Action:</b> ${esc(c.notes)}</p>` : ""}`;
+    ${c.reason ? `<div class="notice" style="margin-top:10px"><b>Stuck Query:</b> ${esc(c.reason)}</div>` : ""}
+    ${c.notes ? `<p><b>Notes:</b> ${esc(c.notes)}</p>` : ""}`;
   $("detailModal").classList.add("open");
 }
 
@@ -280,18 +393,13 @@ $("adminForm").onsubmit = async e => {
   auth.admin = { id, hash: newHash };
   localStorage.setItem(KEY, JSON.stringify(auth));
 
-  if (GOOGLE_SCRIPT_URL.includes("script.google.com")) {
-    await fetch(GOOGLE_SCRIPT_URL, {
-      method: "POST",
-      body: JSON.stringify({ action: "updateAuth", newAdminId: id, newHash })
-    });
-  }
+  await syncToGoogle("updateAuth", { newAdminId: id, newHash });
 
   current = { role: "admin", id };
   sessionStorage.setItem("rbSoftxSession", JSON.stringify(current));
   $("adminModal").classList.remove("open");
-  $("userInfo").textContent = `Logged in as Administrator (${id})`;
-  alert("Admin credentials updated in Google Drive. All devices must now log in with the new password.");
+  $("userInfo").textContent = `Administrator · ${id}`;
+  alert("Admin credentials updated. Previous login is now inactive.");
 };
 
 $("search").oninput = render;
@@ -299,11 +407,45 @@ $("status").onchange = render;
 $("kamFilter").onchange = render;
 $("bankFilter").onchange = render;
 
+function download(name, data, type) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([data], { type }));
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+$("backup").onclick = () => download("crm-backup.json", JSON.stringify(customers, null, 2), "application/json");
+$("restore").onclick = () => $("backupFile").click();
+$("backupFile").onchange = e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const x = JSON.parse(r.result);
+      if (!Array.isArray(x)) throw 0;
+      customers = x;
+      syncToGoogle("saveCustomers", { customers });
+      alert("Backup successfully restored.");
+    } catch { alert("Invalid backup file."); }
+  };
+  r.readAsText(f);
+};
+$("export").onclick = () => {
+  const list = customers.filter(visible);
+  const rows = [["Name","Mobile","Email","Property","KAM","Bank","File ID","Process",...DOCS,"Submission Date","Reason","Notes"]];
+  list.forEach(c => rows.push([c.name, c.mobile, c.email, c.property, c.kam, c.bank, c.fileId, c.process, ...DOCS.map(d => (c.docs || []).includes(d) ? "Yes" : "No"), c.submission, c.reason, c.notes]));
+  download("crm-export.csv", rows.map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n"), "text/csv");
+};
+
 setup();
-fetchGoogleData().then(() => {
+syncFromGoogle().finally(() => {
   const s = sessionStorage.getItem("rbSoftxSession");
   if (s) {
     try { current = JSON.parse(s); start(); } catch {}
   }
 });
 </script>
+</body>
+</html>
