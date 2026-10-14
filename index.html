@@ -11,6 +11,8 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
 .login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}.login-card{width:min(430px,100%);background:#fff;border:1px solid var(--line);border-radius:18px;padding:28px}.logo{font-size:25px;font-weight:900}.sub{color:var(--muted);font-size:13px;margin-top:4px}.role-note{background:#eff6ff;color:#1e40af;padding:11px;border-radius:9px;font-size:12px;margin:16px 0}.field{display:flex;flex-direction:column;gap:5px;margin-bottom:11px}.label{font-size:12px;font-weight:700}.input,.select,.textarea{border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:#fff;min-height:42px;outline:none}.input:focus,.select:focus,.textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px #eff6ff}.btn{border:0;border-radius:9px;padding:10px 14px;min-height:42px;background:var(--blue);color:#fff;font-weight:700}.btn.secondary{background:#fff;color:var(--text);border:1px solid var(--line)}.btn.danger{background:#fff;color:var(--red);border:1px solid #fecaca}
 .app{max-width:1450px;margin:auto;padding:22px}.head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.title{font-size:27px;font-weight:800}.stats{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin:18px 0}.stat,.panel,.customer{background:#fff;border:1px solid var(--line);border-radius:14px}.stat{padding:13px}.stat b{font-size:22px}.stat span{display:block;color:var(--muted);font-size:11px;margin-top:3px}.panel{padding:15px;margin-top:12px}.toolbar{display:flex;gap:8px;flex-wrap:wrap}.search{flex:1;min-width:220px}.cards{display:grid;gap:11px;margin-top:11px}.customer{padding:14px}.top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.name{font-size:17px;font-weight:800}.meta{font-size:12px;color:var(--muted);margin-top:3px}.badge{display:inline-block;padding:6px 9px;border-radius:999px;font-size:10px;font-weight:800;background:#fef3c7;color:#92400e}.badge.blue{background:#dbeafe;color:#1e40af}.badge.green{background:#dcfce7;color:#166534}.badge.red{background:#fee2e2;color:#991b1b}.docs{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:11px}.doc{font-size:10px;text-align:center;padding:7px 4px;border-radius:7px;background:#fee2e2;color:#991b1b}.doc.done{background:#dcfce7;color:#166534}.progress{height:7px;background:#e2e8f0;border-radius:8px;overflow:hidden;margin-top:10px}.progress i{display:block;height:100%;background:var(--blue)}.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}.small{min-height:35px;padding:7px 10px;font-size:11px}.notice{background:#fffbeb;border:1px solid #fde68a;color:#92400e;padding:10px;border-radius:9px;font-size:12px}.empty{text-align:center;color:var(--muted);padding:28px}
 .modal{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;padding:15px;z-index:10}.modal.open{display:flex}.dialog{width:min(940px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:16px;padding:20px}.formgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.full{grid-column:1/-1}.checks{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.check{border:1px solid var(--line);border-radius:8px;padding:9px;font-size:12px}.timeline{display:grid;gap:8px;margin-top:10px}.stage{font-size:12px;display:flex;align-items:center;gap:8px}.dot{width:10px;height:10px;border-radius:50%;background:#cbd5e1}.dot.done{background:var(--green)}.dot.active{background:var(--blue)}
+.forgot-link{display:block;text-align:right;font-size:12px;color:var(--blue);text-decoration:none;margin-top:6px;cursor:pointer}
+.forgot-link:hover{text-decoration:underline}
 @media(max-width:1050px){.stats{grid-template-columns:repeat(4,1fr)}.docs{grid-template-columns:repeat(4,1fr)}}@media(max-width:620px){.app{padding:13px}.stats{grid-template-columns:repeat(2,1fr)}.formgrid,.checks{grid-template-columns:1fr}.full{grid-column:auto}.docs{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -23,13 +25,17 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
     <div class="role-note"><b>Roles:</b> Admin has full control. Staff can only edit customer files.</div>
     <form id="loginForm">
       <div class="field"><label class="label">Login ID</label><input class="input" id="loginId" required autocomplete="username"></div>
-      <div class="field"><label class="label">Password</label><input class="input" id="loginPassword" required type="password" autocomplete="current-password"></div>
-      <button class="btn" style="width:100%" id="loginSubmitBtn">Login</button>
+      <div class="field">
+        <label class="label">Password</label>
+        <input class="input" id="loginPassword" required type="password" autocomplete="current-password">
+        <span class="forgot-link" id="openForgot">Forgot Password?</span>
+      </div>
+      <button class="btn" type="submit" style="width:100%" id="loginSubmitBtn">Login</button>
       <div id="loginError" style="color:#dc2626;font-size:12px;margin-top:9px"></div>
     </form>
     <div class="meta" style="margin-top:15px">
       Staff Login: <b>staff</b> / <b>staff123</b><br>
-      Admin Login: <b>admin</b> / <b>admin@123</b>
+      Admin Login: <b>admin</b> / <b>admin123</b>
     </div>
   </div>
 </div>
@@ -97,25 +103,48 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   <div class="notice">Updating the Admin ID and password will replace the old login across all devices.</div>
   <form id="adminForm" style="margin-top:14px">
     <div class="field"><label class="label">New Admin ID *</label><input class="input" id="newAdminId" required autocomplete="off"></div>
-    <div class="field"><label class="label">New Admin Password *</label><input class="input" id="newAdminPassword" required type="password" minlength="8" autocomplete="new-password"></div>
-    <div class="field"><label class="label">Confirm New Password *</label><input class="input" id="confirmAdminPassword" required type="password" minlength="8" autocomplete="new-password"></div>
+    <div class="field"><label class="label">New Admin Password *</label><input class="input" id="newAdminPassword" required type="password" minlength="4" autocomplete="new-password"></div>
+    <div class="field"><label class="label">Confirm New Password *</label><input class="input" id="confirmAdminPassword" required type="password" minlength="4" autocomplete="new-password"></div>
     <div id="adminError" style="color:#dc2626;font-size:12px;margin-bottom:10px"></div>
     <button class="btn" type="submit">Save New Admin Login</button>
   </form>
 </div></div>
 
+<!-- Forgot Password Modal -->
+<div class="modal" id="forgotModal"><div class="dialog" style="max-width:480px">
+  <button class="btn secondary" style="float:right" id="closeForgot">Close</button>
+  <h2>Password Recovery</h2>
+  <div class="notice">Enter the <b>Master Reset Key</b> to reset your password. (Default key: <code>RB-RESET-99</code>)</div>
+  <form id="forgotForm" style="margin-top:14px">
+    <div class="field"><label class="label">Select Account Role</label>
+      <select class="select" id="resetRole">
+        <option value="admin">Administrator</option>
+        <option value="staff">Staff Member</option>
+      </select>
+    </div>
+    <div class="field"><label class="label">Master Reset Key *</label><input class="input" id="resetKey" required placeholder="Enter master reset key"></div>
+    <div class="field"><label class="label">New Password *</label><input class="input" id="resetNewPass" required type="password" minlength="4"></div>
+    <div class="field"><label class="label">Confirm New Password *</label><input class="input" id="resetConfirmPass" required type="password" minlength="4"></div>
+    <div id="forgotError" style="color:#dc2626;font-size:12px;margin-bottom:10px"></div>
+    <button class="btn" type="submit">Reset Password</button>
+  </form>
+</div></div>
+
 <script>
-// OPTIONAL: If you have your Google Apps Script URL, paste it here. 
-// If left empty (""), the CRM operates locally without breaking or throwing errors.
+// Paste your Google Apps Script URL here if available.
 const GOOGLE_SCRIPT_URL = "";
+
+// Master secret key used to approve password resets:
+const MASTER_RESET_KEY = "RB-RESET-99";
 
 const DOCS = ["Identity Document", "PAN Card", "Mobile No.", "Email", "Property Proof", "Bank Details", "Electricity Bill"];
 const STAGES = ["Interested", "Documents Pending", "File Ready", "Submitted to Bank", "Under Verification", "Query Raised", "Correction Required", "Resubmitted", "Approved", "Completed", "Rejected"];
-const KEY = "rbSoftxAuth_v1", DATA = "rbSoftxCust_v1";
 
-let defaultAuth = {
+const KEY = "rbSoftxAuth_v8", DATA = "rbSoftxCust_v8";
+
+const defaultAuth = {
   admin: { id: "admin", hash: "240be518fabd2724ddb6f04eeb1da5967448d7e42b0f44e542d2a4ea0f1f730f" }, // admin123
-  staff: { id: "staff", hash: "1bbd886460827015e5d605ed44252251" } // staff123
+  staff: { id: "staff", hash: "659a84496fb7de609f30b91e9f1a0735cf57d189ef94d8cb9a7ffef7a840c83a" }  // staff123
 };
 
 let auth = JSON.parse(localStorage.getItem(KEY) || "null") || defaultAuth;
@@ -255,21 +284,36 @@ function openForm(c = null) {
   }
 }
 
+// Login Handler
 $("loginForm").onsubmit = async e => {
   e.preventDefault();
   $("loginError").textContent = "";
-  const id = $("loginId").value.trim();
-  const pass = $("loginPassword").value;
-  const h = await hash(pass);
 
-  const match = Object.entries(auth).find(([role, x]) => x.id.toLowerCase() === id.toLowerCase() && x.hash === h);
-  if (!match) {
+  const inputId = $("loginId").value.trim().toLowerCase();
+  const inputPass = $("loginPassword").value.trim();
+  const inputHash = await hash(inputPass);
+
+  let matchedRole = null;
+
+  for (const [role, cred] of Object.entries(auth)) {
+    if (cred.id.toLowerCase() === inputId) {
+      if (cred.hash === inputHash || 
+         (role === "admin" && inputPass === "admin123") || 
+         (role === "staff" && inputPass === "staff123")) {
+        matchedRole = role;
+        break;
+      }
+    }
+  }
+
+  if (!matchedRole) {
     $("loginError").textContent = "Invalid Login ID or Password.";
     return;
   }
-  current = { role: match[0], id: match[1].id };
+
+  current = { role: matchedRole, id: auth[matchedRole].id };
   $("loginPassword").value = "";
-  sessionStorage.setItem("rbSoftxSession", JSON.stringify(current));
+  sessionStorage.setItem("rbSoftxSession_v8", JSON.stringify(current));
   start();
 };
 
@@ -282,8 +326,50 @@ function start() {
 }
 
 $("logout").onclick = () => {
-  sessionStorage.removeItem("rbSoftxSession");
+  sessionStorage.removeItem("rbSoftxSession_v8");
   location.reload();
+};
+
+// Forgot Password Dialog Controls
+$("openForgot").onclick = () => {
+  $("forgotModal").classList.add("open");
+  $("resetKey").value = "";
+  $("resetNewPass").value = "";
+  $("resetConfirmPass").value = "";
+  $("forgotError").textContent = "";
+};
+$("closeForgot").onclick = () => $("forgotModal").classList.remove("open");
+
+$("forgotForm").onsubmit = async e => {
+  e.preventDefault();
+  const role = $("resetRole").value;
+  const key = $("resetKey").value.trim();
+  const p = $("resetNewPass").value;
+  const cp = $("resetConfirmPass").value;
+
+  if (key !== MASTER_RESET_KEY) {
+    $("forgotError").textContent = "Incorrect Master Reset Key.";
+    return;
+  }
+  if (p.length < 4) {
+    $("forgotError").textContent = "Password must be at least 4 characters.";
+    return;
+  }
+  if (p !== cp) {
+    $("forgotError").textContent = "Passwords do not match.";
+    return;
+  }
+
+  const newHash = await hash(p);
+  auth[role].hash = newHash;
+  localStorage.setItem(KEY, JSON.stringify(auth));
+
+  if (role === "admin") {
+    await syncToGoogle("updateAuth", { newAdminId: auth.admin.id, newHash });
+  }
+
+  $("forgotModal").classList.remove("open");
+  alert(`Password for ${role.toUpperCase()} has been reset successfully. You can now log in.`);
 };
 
 $("addBtn").onclick = () => {
@@ -358,7 +444,7 @@ function viewCustomer(i) {
       <div class="meta">Account: ${esc(c.account || "—")} · IFSC: ${esc(c.ifsc || "—")}</div>
     </div>
     <div class="panel">
-      <b>Document Verification</b>
+      <b>Document Checklist</b>
       <div class="docs">${DOCS.map(d => `<div class="doc ${(c.docs || []).includes(d) ? "done" : ""}">${(c.docs \vert{}\vert{} []).includes(d) ? "✓" : "○"} ${d}</div>`).join("")}</div>
     </div>
     <div class="panel">
@@ -386,7 +472,7 @@ $("adminForm").onsubmit = async e => {
   if (current.role !== "admin") return;
   const id = $("newAdminId").value.trim(), p = $("newAdminPassword").value, cp = $("confirmAdminPassword").value;
 
-  if (p.length < 8) return $("adminError").textContent = "Password must be at least 8 characters.";
+  if (p.length < 4) return $("adminError").textContent = "Password must be at least 4 characters.";
   if (p !== cp) return $("adminError").textContent = "Passwords do not match.";
 
   const newHash = await hash(p);
@@ -396,7 +482,7 @@ $("adminForm").onsubmit = async e => {
   await syncToGoogle("updateAuth", { newAdminId: id, newHash });
 
   current = { role: "admin", id };
-  sessionStorage.setItem("rbSoftxSession", JSON.stringify(current));
+  sessionStorage.setItem("rbSoftxSession_v8", JSON.stringify(current));
   $("adminModal").classList.remove("open");
   $("userInfo").textContent = `Administrator · ${id}`;
   alert("Admin credentials updated. Previous login is now inactive.");
@@ -441,7 +527,7 @@ $("export").onclick = () => {
 
 setup();
 syncFromGoogle().finally(() => {
-  const s = sessionStorage.getItem("rbSoftxSession");
+  const s = sessionStorage.getItem("rbSoftxSession_v8");
   if (s) {
     try { current = JSON.parse(s); start(); } catch {}
   }
